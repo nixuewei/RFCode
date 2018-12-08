@@ -1,0 +1,76 @@
+*** Settings ***
+Library           Selenium2Library
+Library           DatabaseLibrary
+Library           RequestsLibrary
+Library           AutoItLibrary
+Library           Collections
+Library           json
+Library           AppiumLibrary
+
+*** Test Cases ***
+TestSelenium
+    Open Browser    https://www.baidu.com    Chrome
+    input Text    id=kw    testing
+    Click Button    id=su
+    sleep    2
+    Close All Browsers
+
+TestInterface-GET
+    ${Dict}    Create Dictionary    Content-Type: text/html;charset=utf-8
+    Create Session    host    http://www.baidu.com    ${Dict}
+    ${response}    Get Request    host    /v1
+    Should Be Equal As Strings    "${responses.status_code}"    "200"
+    Log    ${responses.content}
+    ${responsesdata}    To Json    ${responses.content}
+    ${key}    Get Dictionary Keys    ${responsesdata}
+    ${str}    Get From Dictionary    ${responsesdata}    status
+    ${account}    Get From Dictionary    ${responsesdata}    account
+    ${status}    Set Variable    200
+    Run Keyword If    ${str}==${status}    log    查询成功
+    Delete All Sessions
+
+TestInterface-POST
+    ${Dict}    Create Dictionary    Content-Type: text/html;charset=utf-8
+    Create Session    host    http://www.baidu.com    ${Dict}
+    ${token}    Evaluate    "12345"
+    ${starttime}    Evaluate    "2016-04-18 00:00:00"
+    ${endtime}    Evaluate    "2016-04-19 00:00:00"
+    ${phone}    Evaluate    ["15640964032"]
+    ${data}    Create Dictionary    token=${token}    starttime=${starttime}    endtime=${endtime}    phone=${phone}
+    ${response}    Post Request    http://www.baidu.com/V1    json=${data}
+    Should Be Equal As Strings    "${responses.status_code}"    "200"
+    Log    ${responses.content}
+    ${responsesdata}    To Json    ${responses.content}
+    ${key}    Get Dictionary Keys    ${responsesdata}
+    log    ${key}
+    ${str}    Get From Dictionary    ${responsesdata}    message
+    Should Contain    ${str}    success
+    Run Keyword If    ${str}=="success"    log    短信查询成功
+    Delete All Sessions
+
+TestMySQL
+    Connect to database using custom params    pymysql    host='数据库ip',port='数据库端口',user='数据库登陆用户名',passwd='密码'，db='数据库名(不是表名)'
+    ${user_id}    query    SELECT user_id from user WHERE user='root'
+    Execute Sql String    delete from user where user_id=1
+    Disconnect From Database
+
+TestOracle
+    Connect To Database Using Custom Params    cx_Oracle    '账号','密码','ip:端口/ORCL'
+
+TestAutoIt3
+    Run    calc.exe
+    Wait For Active Window    计算器
+    Control Click    计算器    \    Button4    #4
+    sleep    1
+    Control Click    计算器    \    Button23    #+
+    sleep    1
+    Control Click    计算器    \    Button10    #5
+    sleep    1
+    Control Click    计算器    \    Button28    #=
+    Comment    Run Keyword If    ${str}==${status}    log    查询成功
+
+TestAppium
+    Comment    Open Application    http://localhost:4723/wd/hub    platformName=Android    platformVersion=7.0    deviceName=ced797860204    unicodeKeyboard=true
+    ...    resetKeyboard=true    noReset=true    sessionOverride=true    appPackage=com.tencent.mm    appActivity=com.tencent.mm.ui.LauncherUI
+    Open Application    http://localhost:4723/wd/hub    platformName=Android    platformVersion=7.0    deviceName=ced797860204    unicodeKeyboard=true    resetKeyboard=true
+    ...    noReset=true    sessionOverride=true    appPackage=com.tencent.mm    appActivity=com.tencent.mm.ui.LauncherUI

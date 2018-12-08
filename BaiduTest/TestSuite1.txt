@@ -1,0 +1,30 @@
+*** Settings ***
+Library           Selenium2Library
+Library           DatabaseLibrary
+Library           RequestsLibrary
+Library           AutoItLibrary
+Library           Collections
+Library           json
+Library           AppiumLibrary
+
+*** Test Cases ***
+TestSelenium
+    Open Browser    https://www.baidu.com    Chrome
+    input Text    id=kw    testing
+    Click Button    id=su
+    sleep    2
+    Close All Browsers
+
+TestInterface-GET
+    ${Dict}    Create Dictionary    Content-Type: text/html;charset=utf-8
+    Create Session    host    http://www.baidu.com    ${Dict}
+    ${response}    Get Request    host    /v1
+    Should Be Equal As Strings    "${responses.status_code}"    "200"
+    Log    ${responses.content}
+    ${responsesdata}    To Json    ${responses.content}
+    ${key}    Get Dictionary Keys    ${responsesdata}
+    ${str}    Get From Dictionary    ${responsesdata}    status
+    ${account}    Get From Dictionary    ${responsesdata}    account
+    ${status}    Set Variable    200
+    Run Keyword If    ${str}==${status}    log    查询成功
+    Delete All Sessions
